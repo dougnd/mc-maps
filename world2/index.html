@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <base target="_top">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>World 2 Minecraft map</title>
+
+
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+        <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        #coords {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 5px 10px;
+            font-size: 14px;
+            z-index: 999;
+        }
+        .portal-icon {
+            width: 20px;
+            height: 40px;
+            background: linear-gradient(45deg, black, purple); /* Black to purple gradient */
+            border-radius: 0; /* Square shape */
+            border: 2px solid black; /* Optional border */
+        }
+        </style>
+
+
+    </head>
+    <body>
+
+        <div id="map"></div>
+        <div id="coords">X: 0, Y: 0</div>
+        <script>
+
+            // Coordinate system:
+            // Lat = -Z
+            // Lng = X
+            const xz = (x, z) => ([-z, x])
+
+            var portalIcon = L.divIcon({
+                className: 'portal-icon', 
+                html: '', // You can also add content like text here if needed
+                iconSize: [20, 40], // Set size of the square marker
+                iconAnchor: [10, 40], // Anchor the icon to the center
+            });
+
+            const portals = L.layerGroup([
+                L.marker(xz(-53,-24), {icon: portalIcon}).bindPopup('Origin portal'), 
+                L.marker(xz(765, 278), {icon: portalIcon}).bindPopup('Daniel/Lucy portal'), 
+                L.marker(xz(100, -300), {icon: portalIcon}).bindPopup("Grampa's Portal"),
+                L.marker(xz(1952, -1824), {icon: portalIcon}).bindPopup("New base"), //244 -232
+                L.marker(xz(816, -219), {icon: portalIcon}).bindPopup("Village"), 
+                L.marker(xz(1310, 208), {icon: portalIcon}).bindPopup("Jungle"), 
+                L.marker(xz(1269, 553), {icon: portalIcon}).bindPopup("Cat Village (desert)"), 
+                L.marker(xz(1514, 185), {icon: portalIcon}).bindPopup("Lush Caves"), 
+            ])
+
+            const pois = L.layerGroup([
+                L.marker(xz(-62,-43)).bindPopup("Doug's House #1"), 
+                L.marker(xz(-56,-31)).bindPopup("Dominic's House #1"), 
+                L.marker(xz(100, -322)).bindPopup("Grampa's House"), 
+                L.marker(xz(107, -353)).bindPopup("Grampa's Lighthouse"), 
+                L.marker(xz(166, -259)).bindPopup("Grampa's Bridge"), 
+                L.marker(xz(293, -229)).bindPopup("Fluffy cat mountain"), 
+            ])
+            const map = L.map('map', {
+                crs: L.CRS.Simple,
+                minZoom: -5,
+                layers: [portals, pois]
+            });
+
+            // Maps seem to have internal origin of x,z of -64,-64?
+
+            // Lowest resolution
+            L.imageOverlay('map-14.png', [xz(-64,-64), xz(2048-64, -2048-64)]).addTo(map);
+            L.imageOverlay('map-9.png', [xz(-64,-64), xz(1024-64, 1024-64)]).addTo(map);
+            L.imageOverlay('map-45.png', [xz(-64,-64), xz(64, 64)]).addTo(map);
+            // Best resolution
+
+            map.fitBounds([[-2000,-2000], [2000,2000]])
+
+            L.control.layers({}, {
+                'Portals': portals,
+                'POIs': pois,
+            }).addTo(map);
+
+            const coordsElement = document.getElementById('coords');
+            // Update coordinates as mouse moves
+            map.on('mousemove', function(e) {
+                const z = -e.latlng.lat.toFixed(1);
+                const x = e.latlng.lng.toFixed(1);
+                const zNether = -(e.latlng.lat/8).toFixed(1);
+                const xNether = (e.latlng.lng/8).toFixed(1);
+                coordsElement.innerHTML = `Overworld X: ${x}, Z: ${z} | Nether X: ${xNether}, ${zNether}`;
+            });
+
+
+
+        </script>
+    </body>
+</html>
+
