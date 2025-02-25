@@ -59,7 +59,6 @@
                 iconSize: [20, 40], // Set size of the square marker
                 iconAnchor: [10, 40], // Anchor the icon to the center
             });
-
             const defaultIcon = new L.Icon.Default()
 
             const map = L.map('map', {
@@ -91,6 +90,28 @@
 
             const sheetID = '1tPiviNB4KczXfjt9cXE5xfrURk18NFrdkz3zT6aolwc';
 
+            const markers = []
+            const layers = []
+            const updateUrlParams = () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const openMarkers = markers.filter(m => (
+                    m._popup && m._popup.isOpen()
+                )).map(m => m.id);
+
+                urlParams.set('marker', openMarkers.join(','));
+                layers.forEach(l => {
+                    if (map.hasLayer(l)) {
+                        urlParams.set(l.id, 'true')
+                    } else {
+                        urlParams.set(l.id, 'false')
+                    }
+                })
+
+                window.history.replaceState(null, '', '?' + urlParams.toString());
+            }
+            map.on('layeradd', updateUrlParams); 
+            map.on('layerremove', updateUrlParams); 
+
             const fetchCategoriesData = async () => {
                 const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:csv&sheet=Categories`;
                 const response = await fetch(url);
@@ -105,7 +126,7 @@
                 rows.slice(1).forEach((row) => {
                     data[row[1]] = {
                         name: row[0],
-                        show: row[3].trim().toUpperCase() === 'TRUE',
+                        showByDefault: row[3].trim().toUpperCase() === 'TRUE',
                         icon: icons[row[2].trim()],
                         markers: [],
                     }
@@ -113,6 +134,9 @@
                 return data
             }
             const fetchPointData = async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const markersToOpen = urlParams.get('marker');
+                const openMarkerIds = (markersToOpen|| "").split(',');
                 const categories = await fetchCategoriesData()
                 const url = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=out:csv&sheet=Points`;
                 const response = await fetch(url);
@@ -127,19 +151,35 @@
                     const category = categories[categoryId]
                     const x = Number(row[2])
                     const y = Number(row[3])
-                    category.markers.push(
-                        L.marker(xz(x,y), 
+                    const marker = L.marker(xz(x,y), 
                             {icon: category.icon}
-                        ).bindPopup(row[0]))
+                        ).bindPopup(row[0])
+                    marker.id = row[4]
+                    marker.on('popupopen', updateUrlParams)
+                    marker.on('popupclose', updateUrlParams)
+                    markers.push(marker)
+                    category.markers.push(marker)
+                    if (openMarkerIds.includes(marker.id)) {
+                        marker.addTo(map)
+                        marker.openPopup()
+                    }
                 })
+
 
                 const overlayLayers = {}
                 Object.keys(categories).forEach(categoryId => {
                     const category = categories[categoryId]
-                    overlayLayers[category.name] = L.layerGroup(category.markers).addTo(map)
+                    const layer = L.layerGroup(category.markers)
+                    layer.id = categoryId
+                    overlayLayers[category.name] = layer
+                    layers.push(layer)
+                    if (urlParams.get(categoryId) === "true" || (
+                        urlParams.get(categoryId) !== "false" && category.showByDefault
+                    )) {
+                        map.addLayer(layer)
+                    } 
                 })
                 L.control.layers({}, overlayLayers, {collapsed: false}).addTo(map);
-
 
             }
             fetchPointData()
