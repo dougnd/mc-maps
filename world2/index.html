@@ -210,7 +210,7 @@
                 const overlayLayers = {}
                 Object.keys(categories).forEach(categoryId => {
                     const category = categories[categoryId]
-                    const layer = L.layerGroup(category.markers)
+                    const layer = new L.featureGroup(category.markers)
                     layer.id = categoryId
                     overlayLayers[category.name] = layer
                     layers.push(layer)
@@ -222,6 +222,7 @@
                 })
                 L.control.layers({}, overlayLayers, {collapsed: false}).addTo(map);
 
+                map.fitBounds(new L.featureGroup(layers).getBounds().pad(0.1));
             }
             fetchPointData()
         </script>
