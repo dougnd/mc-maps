@@ -68,12 +68,53 @@
 
             // Maps seem to have internal origin of x,z of -64,-64?
 
-            // Lowest resolution
-            L.imageOverlay('map-66.png', [xz(-64,-2048-64), xz(2048-64, -4096-64)]).addTo(map);
-            L.imageOverlay('map-14.png', [xz(-64,-64), xz(2048-64, -2048-64)]).addTo(map);
-            L.imageOverlay('map-9.png', [xz(-64,-64), xz(1024-64, 1024-64)]).addTo(map);
-            L.imageOverlay('map-45.png', [xz(-64,-64), xz(64, 64)]).addTo(map);
-            // Best resolution
+            const addMap = (filename, zoom, xIndex, yIndex) => {
+                let size 
+                switch (zoom) {
+                    case 0:
+                        size = 128;
+                        break
+                    case 1:
+                        size = 256;
+                        break
+                    case 2:
+                        size = 512;
+                        break
+                    case 3:
+                        size = 1024;
+                        break
+                    case 4:
+                        size = 2048;
+                        break
+                    default:
+                        console.error(`unknown zoom of ${zoom}`)
+                        return
+                }
+
+                const xOffset = xIndex*size
+                const yOffset = yIndex*size
+                L.imageOverlay(filename, [xz(xOffset-64, yOffset-64+size), xz(xOffset-64+size, yOffset-64)]).addTo(map)
+            }
+
+            //L.imageOverlay('map-66.png', [xz(-64,-2048-64), xz(2048-64, -4096-64)]).addTo(map);
+            //L.imageOverlay('map-14.png', [xz(-64,-64), xz(2048-64, -2048-64)]).addTo(map);
+            //L.imageOverlay('map-9.png', [xz(-64,-64), xz(1024-64, 1024-64)]).addTo(map);
+            //L.imageOverlay('map-45.png', [xz(-64,-64), xz(64, 64)]).addTo(map);
+            
+            // Zoom level 4 (furtherst out)
+            addMap('map-101.png', 4, -1, -2)
+            addMap('map-66.png', 4, 0, -2)
+            addMap('map-14.png', 4, 0, -1)
+
+            // Zoom level 3
+            addMap('map-9.png', 3, 0, 0)
+
+            // Zoom level 2
+
+            // Zoom level 1
+
+            // Zoom level 0 
+            addMap('map-45.png', 0, 0, 0)
 
             map.fitBounds([xz(-1000, -3000), xz(2000, 1000)])
 
